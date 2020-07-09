@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/FreeCodeUserJack/GoLangLearn/28.testingandbenchmarking/sumdir"
+	sumdir "github.com/FreeCodeUserJack/GoLangLearn/28.testingandbenchmarking/sumdir"
 )
 
 func main() {
 	fmt.Println("Starting")
-	fmt.Println(Sum(1, 2, 3, 4, 5))
+	fmt.Println(sumdir.Sum(1, 2, 3, 4, 5))
 }

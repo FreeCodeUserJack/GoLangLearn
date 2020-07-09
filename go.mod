@@ -1,4 +1,4 @@
-module ex.com/user/repo
+module github.com/FreeCodeUserJack/GoLangLearn
 
 go 1.14
 
