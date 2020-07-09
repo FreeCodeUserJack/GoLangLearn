@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/FreeCodeUserJack/GoLangLearn/28.testingandbenchmarking/sumDir"
+	"github.com/FreeCodeUserJack/GoLangLearn/28.testingandbenchmarking/sumdir"
 )
 
 func main() {
