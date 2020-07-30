@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hello World!</title>
+</head>
+<body>
+<h1>Composition and Child</h1>
+<p>{{.}}</p>
+<h2>Name - {{.Name}}</h2>
+<h3>Courses</h3>
+<div>{{template "ChildTemp" .Courses}}</div>
+<h3>Profs</h3>
+<div>{{template "ChildTemp" .Profs}}</div>
+<h3>Students</h3>
+<div>{{template "ChildTemp" .Students}}</div>
+<h3></h3>
+<p>Method call - {{$test := index .Students 1}} {{$test.Person.Speak}}</p>
+</body>
+</html>

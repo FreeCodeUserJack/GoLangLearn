@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Form Input Submit Variable</title>
+    </head>
+    <body>
+        {{if .Method}}
+        <h3>Request Method: {{.Method}}</h3>
+        {{end}}
+
+        {{if .Submissions}}
+        <main>
+            <p><strong>variable names</strong> (identifiers) and <em>values</em>:</p>
+            {{range $key, $value := .Submissions}}
+                <p><strong>{{$key}}</strong></p>
+                <ul>{{range $value}}<li><em>{{.}}</em></li>{{end}}</ul>
+            {{end}}
+        </main>
+        {{end}}
+
+        <form action="/?fname=James" method="POST">
+            <input type="text" name="fname"  placeholder="first name" autofocus autocomplete="off">
+            <input type="submit" name="submit-btn" value="Button Text">
+        </form>
+    </body>
+</html>

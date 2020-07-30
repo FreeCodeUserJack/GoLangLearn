@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hello World!</title>
+</head>
+<body>
+
+<!-- {{$crowd := .}} -->
+<h1>Struct-Slice-Struct</h1>
+<p>Number: {{.Number}}</p>
+<p>Desc: {{.Desc}}</p>
+<ul>
+    {{range $index, $person := .People}}
+    <li>{{$index}} - {{$person.Name}} - {{$person.Motto}}</li>
+    {{end}}
+</ul>
+</body>
+</html>

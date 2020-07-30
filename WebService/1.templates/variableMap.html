@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hello World!</title>
+</head>
+<body>
+<h2>Map Variable</h2>
+<ul>
+    {{range $key, $val := .}}
+    <li>Key: {{$key}} - Val: {{$val}}</li>
+    {{end}}
+</ul>
+</body>
+</html>
