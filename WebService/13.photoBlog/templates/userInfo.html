@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>User Info</title>
+    </head>
+    <body>
+        {{if .}}
+        <h1>Welcome, {{.FirstName}} {{.LastName}}</h1>
+        <p>Age: {{.Age}}</p>
+        <p>Favorite Drink: {{.Drink}}</p>
+        {{end}}
+        <form method="POST" action="/userInfo" enctype="multipart/form-data">
+            <input type="file" name="image">
+            <input type="submit">
+        </form>
+    </body>
+    <a href="/signout">Sign Out</a>
+</html>

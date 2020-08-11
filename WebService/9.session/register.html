@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Register</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <h1>Register</h1>
+        <form method="POST" action="/register">
+            <input type="email" name="email" placeholder="email">
+            <input type="password" name="password" placeholder="password">
+            <input type="text" name="firstname" placeholder="First Name">
+            <input type="text" name="lastname" placeholder="Last Name">
+            <select name="role">
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
+            <input type="submit">
+        </form>
+
+        <a href="/">Signin</a>
+    </body>
+</html>

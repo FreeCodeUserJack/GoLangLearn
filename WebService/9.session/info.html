@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Info</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <h1>Info</h1>
+        {{if .}}
+        <p>Email: {{.Email}}</p>
+        <p>First: {{.First}}</p>
+        <p>Last: {{.Last}}</p>
+        <p>Role: {{.Role}}}</p>
+        {{end}}
+
+        <a href="/expire">Sign out</a>
+        <a href="/admin">Admin ONLY</a>
+    </body>
+</html>
