@@ -16,4 +16,8 @@
         </form>
     </body>
     <a href="/signout">Sign Out</a>
+    <br>
+    {{range .Images}}
+        <img src={{.}} alt="user_image">
+    {{end}}
 </html>

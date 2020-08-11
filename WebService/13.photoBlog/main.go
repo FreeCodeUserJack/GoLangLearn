@@ -1,6 +1,9 @@
 package main
 
 import (
+	"path/filepath"
+	"os"
+	"io/ioutil"
 	"fmt"
 	"net/http"
 	"html/template"
@@ -9,6 +12,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"time"
+	"strconv"
 )
 
 var temp *template.Template
@@ -51,6 +55,7 @@ func init() {
 		lastUpdate timestamp
 	);`)
 	checkError(err)
+	defer stmt.Close()
 
 	result, err := stmt.Exec()
 	checkError(err)
@@ -58,7 +63,7 @@ func init() {
 	numR, err := result.RowsAffected()
 	checkError(err)
 
-	fmt.Println(numR)
+	fmt.Print(numR, " ")
 
 	// create user data table
 	stmt, err = db.Prepare(`
@@ -79,7 +84,24 @@ func init() {
 	numR, err = result.RowsAffected()
 	checkError(err)
 
-	fmt.Println(numR)
+	fmt.Print(numR, " ")
+
+	// create user images table
+	stmt, err = db.Prepare(`
+	CREATE TABLE IF NOT EXISTS user_images (
+		user_images_id INT PRIMARY KEY AUTO_INCREMENT,
+		email VARCHAR(100) NOT NULL,
+		image_path VARCHAR(255) NOT NULL
+	);`)
+	checkError(err)
+
+	result, err = stmt.Exec()
+	checkError(err)
+
+	numR, err = result.RowsAffected()
+	checkError(err)
+
+	fmt.Print(numR, "\n")
 }
 
 func main() {
@@ -133,6 +155,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
 			return
 		}
+		defer stmt.Close()
 
 		result, err := stmt.Exec(
 			req.FormValue("Email"),
@@ -180,6 +203,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
 			return
 		}
+		defer stmt.Close()
 
 		encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(req.FormValue("Password")), bcrypt.MinCost)
 		checkError(err)
@@ -203,6 +227,19 @@ func register(w http.ResponseWriter, req *http.Request) {
 		numR, err := result.RowsAffected()
 		checkError(err)
 		fmt.Println(numR)
+
+		// need to create a dir in user_images dir to store this user's files
+		var userIDBuffer int
+		err = db.QueryRow(`SELECT user_data_id FROM user_data WHERE email=?`, req.FormValue("Email")).Scan(&userIDBuffer)
+		if err != nil {
+			fmt.Println("error trying to retrieve user with email: ", req.FormValue("Email"))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, err = os.Stat("./user_images/" + "user_Id_" + strconv.Itoa(userIDBuffer)); os.IsNotExist(err) {
+			os.Mkdir("./user_images/" + "user_Id_" + strconv.Itoa(userIDBuffer), os.ModeDir)
+		}
 
 		http.Redirect(w, req, "/", http.StatusSeeOther)
 		return
@@ -232,7 +269,7 @@ func userInfo(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// check if session time has expired
-	if time.Now().Sub(sessionBuffer.lastUpdate).Seconds() > 300 {
+	if time.Now().Sub(sessionBuffer.lastUpdate).Seconds() > 3600 {
 		fmt.Println("session expired")
 		http.Redirect(w, req, "/signout", http.StatusTemporaryRedirect)
 		return
@@ -245,6 +282,7 @@ func userInfo(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
 		return
 	}
+	defer stmt.Close()
 
 	result, err := stmt.Exec(time.Now(), sessionCookie.Value)
 	if err != nil {
@@ -266,8 +304,103 @@ func userInfo(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Println("queryrow unsuccessful for email: ", userBuffer.Email)
 	}
+	// fmt.Println(userBuffer)
 
-	temp.ExecuteTemplate(w, "userInfo.html", userBuffer)
+	// if post, then save image on server file system and store that path in database
+	if req.Method == http.MethodPost {
+		file, fileHeader, err := req.FormFile("image")
+		if err != nil {
+			fmt.Println("error uploading image ", err.Error())
+			http.Error(w, "file not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+
+		byteStream, err := ioutil.ReadAll(file)
+		if err != nil {
+			fmt.Println("could not read uploaded image file ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// debug
+		// fmt.Println(userBuffer, userBuffer.id, string(userBuffer.id), strconv.Itoa(userBuffer.id))
+		pathStringBuffer := string(filepath.Join("./user_images",  "user_Id_" + strconv.Itoa(userBuffer.id), uuid.NewV4().String() + "_" + fileHeader.Filename))
+		dst, err := os.Create(pathStringBuffer)
+		if err != nil {
+			fmt.Println("could not create file on server ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+
+		_, err = dst.Write(byteStream)
+		if err != nil {
+			fmt.Println("could not write image to file system file ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// save the image path to db
+		stmt, err = db.Prepare(`INSERT INTO user_images VALUES(null, ?, ?);`)
+		if err != nil {
+			fmt.Println("could not prepare stmt to insert image to db ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		result, err = stmt.Exec(userBuffer.Email, pathStringBuffer)
+		if err != nil {
+			fmt.Println("could not insert image to db ", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		numR, err = result.RowsAffected()
+		checkError(err)
+
+		fmt.Println(numR)
+	}
+
+	// need to get the images for a user
+	var userImages []string
+
+	rows, err := db.Query(`SELECT image_path FROM user_images WHERE email=?`, userBuffer.Email)
+	if err != nil {
+		fmt.Println("error pulling images for user with email: ", userBuffer.Email, err.Error())
+		http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
+		return
+	}
+
+	var pathBuffer string
+	for rows.Next() {
+		err = rows.Scan(&pathBuffer)
+		if err != nil {
+			fmt.Println("error scanning path from db to string variable", err.Error())
+			http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
+			return
+		}
+		userImages = append(userImages, pathBuffer)
+	}
+
+	fmt.Println(userImages)
+
+	dataPayload := struct {
+		Email string
+		FirstName string
+		LastName string
+		Age int
+		Drink string
+		Images []string
+	} {
+		userBuffer.Email,
+		userBuffer.FirstName,
+		userBuffer.LastName,
+		userBuffer.Age,
+		userBuffer.Drink,
+		userImages,
+	}
+
+	temp.ExecuteTemplate(w, "userInfo.html", dataPayload)
 }
 
 func signOut(w http.ResponseWriter, req *http.Request) {
@@ -285,6 +418,7 @@ func signOut(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/error", http.StatusTemporaryRedirect)
 		return
 	}
+	defer stmt.Close()
 
 	result, err := stmt.Exec(sessionCookie.Value)
 	if err != nil {
