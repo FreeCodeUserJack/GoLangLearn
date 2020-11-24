@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Ajax Send</title>
+        <style>
+            h1 {
+                cursor: pointer;
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Make a Request by Clicking On This Text!</h1>
+    </body>
+    <script>
+        document.querySelector('h1').onclick = makeRequest;
+
+        function makeRequest() {
+            // create XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+
+            // open the request
+            xhr.open('GET', '/foo', true)
+
+            // handles the response
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+                    alert(xhr.responseText);
+                }       
+            };
+
+            // send the request
+            xhr.send();
+        }
+    </script>
+</html>
